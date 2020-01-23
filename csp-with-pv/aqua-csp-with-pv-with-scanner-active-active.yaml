@@ -36,27 +36,27 @@ objects:
       resources: ["*"]
       verbs: ["get", "list", "watch"]
   -
-      apiVersion: rbac.authorization.k8s.io/v1
-      kind: ClusterRoleBinding
-      metadata:
-        name: aqua-discovery-crb
-      roleRef:
-        name: aqua-discovery-cr
-        apiGroup: rbac.authorization.k8s.io
-        kind: ClusterRole
-      subjects:
-        - kind: ServiceAccount
-          name: aqua
-          namespace: ${NAMESPACE}
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRoleBinding
+    metadata:
+      name: aqua-discovery-crb
+    roleRef:
+      name: aqua-discovery-cr
+      apiGroup: rbac.authorization.k8s.io
+      kind: ClusterRole
+    subjects:
+      - kind: ServiceAccount
+        name: "${SERVICE_ACCOUNT}"
+        namespace:  "${NAMESPACE}"
   -
-    apiVersion: v1
+    apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRole
     metadata:
       annotations:
         openshift.io/description: A user who can search and scan images from an OpenShift integrated registry.
       name: image-scanner
     rules:
-    - apiGroups:
+    - apiGroups: [""]
       resources:
       - imagestreams
       - imagestreams/layers
@@ -73,8 +73,7 @@ objects:
       name: image-scanner
     subjects:
       - kind: ServiceAccount
-        name: ${SERVICE_ACCOUNT}
-        namespace: ${NAMESPACE}
+        name: "${SERVICE_ACCOUNT}"
   -
     apiVersion: v1
     kind: Secret
@@ -159,6 +158,9 @@ objects:
     metadata:
       name: aqua-gateway
     spec:
+      selector:
+        matchLabels:
+          app: aqua-gateway
       template:
         metadata:
           labels:
@@ -231,6 +233,9 @@ objects:
     metadata:
       name: aqua-db
     spec:
+      selector:
+        matchLabels:
+          app: aqua-db
       template:
         metadata:
           labels:
@@ -319,7 +324,10 @@ objects:
     metadata:
       name: aqua-web
     spec:
-      replicas: ${CONSOLE_COUNT}
+      selector:
+        matchLabels:
+          app: aqua-web
+      replicas: "${{CONSOLE_COUNT}}"
       template:
         metadata:
           labels:
@@ -409,7 +417,10 @@ objects:
     metadata:
       name: aqua-scanner
     spec:
-      replicas: ${SCANNER_COUNT}
+      selector:
+        matchLabels:
+          app: aqua-scanner
+      replicas: "${{SCANNER_COUNT}}"
       template:
         metadata:
           labels:
@@ -460,7 +471,8 @@ objects:
       revisionHistoryLimit: 10
       progressDeadlineSeconds: 600
 parameters: 
-  - description: "Current Namespace (needed for rolebinding)"
+  - 
+    description: "Current Namespace (needed for rolebinding)"
     displayName: NAMESPACE
     name: NAMESPACE
     required: true
